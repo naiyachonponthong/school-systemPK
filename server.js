@@ -68,22 +68,19 @@ app.use(errorHandler);
 // Database sync & start server
 async function startServer() {
   try {
-    // Test database connection
     await sequelize.authenticate();
     console.log('Database connected successfully.');
 
-    // Only sync in development
-    if (process.env.NODE_ENV === 'development') {
-      await sequelize.sync({ alter: false });
-      console.log('Database tables synced.');
-      
-      // Seed default data only in development
-      try {
-        const { seedDefaultData } = require('./seeders/001-default-data');
-        await seedDefaultData();
-      } catch (seedError) {
-        console.log('Seed data already exists or seeding failed:', seedError.message);
-      }
+    // Sync all models (create tables if not exist)
+    await sequelize.sync({ alter: false });
+    console.log('Database tables synced.');
+
+    // Seed default data
+    try {
+      const { seedDefaultData } = require('./seeders/001-default-data');
+      await seedDefaultData();
+    } catch (seedError) {
+      console.log('Seed skipped:', seedError.message);
     }
 
     app.listen(PORT, '0.0.0.0', () => {
@@ -91,11 +88,9 @@ async function startServer() {
     });
   } catch (error) {
     console.error('Unable to start server:', error);
-    // Don't exit in production, just log the error
-    if (process.env.NODE_ENV !== 'production') {
-      process.exit(1);
-    }
   }
 }
 
 startServer();
+
+module.exports = app;
