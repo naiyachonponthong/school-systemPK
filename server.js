@@ -20,10 +20,7 @@ const auditRoutes = require('./routes/audit');
 const uploadRoutes = require('./routes/upload');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-// For HostAtom - use provided port
-const HOST_PORT = process.env.HOSTATOM_PORT || PORT;
+const PORT = process.env.PORT || 10000; // ใช้ port จาก HostAtom
 
 // Security
 app.use(helmet({
@@ -45,7 +42,7 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static files
+// Static files - ให้บริการจาก public folder เท่านั้น (security best practice)
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -60,7 +57,7 @@ app.use('/api/duties', dutyRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/upload', uploadRoutes);
 
-// Serve frontend for all non-API routes
+// Serve frontend for all non-API routes (SPA)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -71,6 +68,12 @@ app.use(errorHandler);
 // Database sync & start server
 async function startServer() {
   try {
+    console.log('Starting server...');
+    console.log('Environment:', process.env.NODE_ENV);
+    console.log('Port:', process.env.PORT);
+    console.log('DB Host:', process.env.DB_HOST);
+    console.log('DB Name:', process.env.DB_NAME);
+    
     await sequelize.authenticate();
     console.log('Database connected successfully.');
 
@@ -78,15 +81,18 @@ async function startServer() {
     await sequelize.sync({ alter: false });
     console.log('Database tables synced.');
 
-    // Seed default data
-    const { seedDefaultData } = require('./seeders/001-default-data');
-    await seedDefaultData();
+    // Seed default data (only in development)
+    if (process.env.NODE_ENV !== 'production') {
+      const { seedDefaultData } = require('./seeders/001-default-data');
+      await seedDefaultData();
+    }
 
-    app.listen(HOST_PORT, () => {
-      console.log(`Server running on port ${HOST_PORT}`);
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {
     console.error('Unable to start server:', error);
+    console.error('Error details:', error.message);
     process.exit(1);
   }
 }
