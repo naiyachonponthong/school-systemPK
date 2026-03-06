@@ -6,7 +6,12 @@
   "scripts": {
     "start": "node server.js",
     "dev": "npx nodemon server.js",
-    "seed": "node seeders/001-default-data.js"
+    "seed": "node seeders/001-default-data.js",
+    "prod": "NODE_ENV=production node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
