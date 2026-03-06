@@ -22,6 +22,9 @@ const uploadRoutes = require('./routes/upload');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// For HostAtom - use provided port
+const HOST_PORT = process.env.HOSTATOM_PORT || PORT;
+
 // Security
 app.use(helmet({
   contentSecurityPolicy: false,
@@ -71,26 +74,21 @@ async function startServer() {
     await sequelize.authenticate();
     console.log('Database connected successfully.');
 
-    // Sync all models (create tables if not exist)
+    // Sync all models (create tables)
     await sequelize.sync({ alter: false });
     console.log('Database tables synced.');
 
     // Seed default data
-    try {
-      const { seedDefaultData } = require('./seeders/001-default-data');
-      await seedDefaultData();
-    } catch (seedError) {
-      console.log('Seed skipped:', seedError.message);
-    }
+    const { seedDefaultData } = require('./seeders/001-default-data');
+    await seedDefaultData();
 
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on port ${PORT}`);
+    app.listen(HOST_PORT, () => {
+      console.log(`Server running on port ${HOST_PORT}`);
     });
   } catch (error) {
     console.error('Unable to start server:', error);
+    process.exit(1);
   }
 }
 
 startServer();
-
-module.exports = app;
