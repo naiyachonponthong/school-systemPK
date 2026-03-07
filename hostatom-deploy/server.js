@@ -20,7 +20,7 @@ const auditRoutes = require('./routes/audit');
 const uploadRoutes = require('./routes/upload');
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Render กำหนด PORT อัตโนมัติ
+const PORT = 3000; // Phusion Passenger จำกัดให้ใช้ port 3000 เท่านั้น
 
 // Security - สำหรับ HTTPS
 app.use(helmet({

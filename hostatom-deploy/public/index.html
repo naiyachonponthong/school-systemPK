@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบจัดการบุคลากร</title>
+
+  <!-- Google Fonts: Prompt -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- TailwindCSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        fontFamily: {
+          sans: ['Prompt', 'sans-serif'],
+        },
+        extend: {
+          colors: {
+            primary: '#1c2b45',
+            secondary: '#ddc36e',
+            'primary-light': '#2a3f5f',
+            'primary-dark': '#141f33',
+            'secondary-light': '#e8d48a',
+            'secondary-dark': '#c4a84a',
+            surface: '#f8fafc'
+          },
+          boxShadow: {
+            'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.1)',
+            'glow': '0 0 15px rgba(221, 195, 110, 0.3)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- QR Code Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
+  <!-- Flaticon UIcons -->
+  <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+  <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
+  <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-bold-rounded/css/uicons-bold-rounded.css'>
+
+  <!-- Application Styles -->
+  <link rel="stylesheet" href="/css/styles.css">
+
+  <style>
+    body { font-family: 'Prompt', sans-serif; }
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+    }
+    .input-group:focus-within label { color: #1c2b45; }
+    .input-group:focus-within i { color: #ddc36e; }
+  </style>
+</head>
+<body class="bg-surface min-h-screen text-gray-800">
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="fixed inset-0 bg-primary/90 backdrop-blur-sm flex items-center justify-center z-[9999]">
+    <div class="text-center p-8 rounded-3xl bg-white/10 border border-white/10 shadow-2xl transform scale-100 transition-all">
+      <div class="relative mb-6">
+        <div class="w-16 h-16 border-4 border-secondary/30 border-t-secondary rounded-full animate-spin mx-auto"></div>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+        </div>
+      </div>
+      <p class="text-white text-lg font-medium tracking-wide animate-pulse" data-lang-th="กำลังโหลด..." data-lang-en="Loading...">กำลังโหลด...</p>
+    </div>
+  </div>
+
+  <!-- Login Page -->
+  <div id="loginPage" class="hidden min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-100 to-gray-200 relative overflow-hidden">
+    <!-- Background Decor -->
+    <div class="absolute top-0 left-0 w-full h-64 bg-primary transform -skew-y-3 origin-top-left z-0"></div>
+    <div class="absolute bottom-0 right-0 w-64 h-64 bg-secondary/10 rounded-full blur-3xl z-0"></div>
+
+    <div class="w-full max-w-md relative z-10">
+      <!-- Language Toggle -->
+      <div class="flex justify-end mb-4">
+        <button onclick="toggleLanguage()" id="langToggleBtn"
+          class="flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur rounded-full shadow-sm text-sm font-medium hover:bg-white transition-all transform hover:scale-105">
+          <i class="fi fi-rr-globe text-primary"></i>
+          <span id="langToggleText" class="text-primary">EN</span>
+        </button>
+      </div>
+
+      <!-- Login Card -->
+      <div class="bg-white rounded-3xl shadow-soft overflow-hidden">
+        <!-- Header -->
+        <div class="bg-primary p-8 text-center relative overflow-hidden">
+          <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+          <div class="relative z-10">
+            <div id="loginLogo" class="w-24 h-24 mx-auto mb-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-500">
+              <i class="fi fi-sr-school text-4xl text-secondary"></i>
+            </div>
+            <h1 id="loginAppName" class="text-2xl font-bold text-white tracking-tight">ระบบจัดการบุคลากร</h1>
+            <p id="loginSchoolName" class="text-secondary/90 text-sm mt-1 font-light">โรงเรียนตัวอย่าง</p>
+          </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="flex border-b border-gray-100 p-1 bg-gray-50/50">
+          <button onclick="switchLoginTab('admin')" id="tabAdmin" class="flex-1 py-3 rounded-xl text-center font-medium text-sm transition-all duration-300 login-tab active">
+            <i class="fi fi-rr-shield-check mr-2 align-middle"></i>
+            <span data-lang-th="ผู้ดูแลระบบ" data-lang-en="Administrator">ผู้ดูแลระบบ</span>
+          </button>
+          <button onclick="switchLoginTab('user')" id="tabUser" class="flex-1 py-3 rounded-xl text-center font-medium text-sm transition-all duration-300 login-tab">
+            <i class="fi fi-rr-user mr-2 align-middle"></i>
+            <span data-lang-th="บุคลากร" data-lang-en="Personnel">บุคลากร</span>
+          </button>
+        </div>
+
+        <!-- Login Form -->
+        <div class="p-8">
+          <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
+            <div class="input-group">
+              <label class="block text-sm font-semibold text-gray-600 mb-1.5 transition-colors">
+                <span data-lang-th="ชื่อผู้ใช้" data-lang-en="Username">ชื่อผู้ใช้</span>
+              </label>
+              <div class="relative">
+                <i class="fi fi-rr-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg transition-colors"></i>
+                <input type="text" id="loginUsername" required
+                  class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all outline-none"
+                  data-placeholder-th="กรอกชื่อผู้ใช้" data-placeholder-en="Enter username" placeholder="กรอกชื่อผู้ใช้">
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label class="block text-sm font-semibold text-gray-600 mb-1.5 transition-colors">
+                <span data-lang-th="รหัสผ่าน" data-lang-en="Password">รหัสผ่าน</span>
+              </label>
+              <div class="relative">
+                <i class="fi fi-rr-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg transition-colors"></i>
+                <input type="password" id="loginPassword" required
+                  class="w-full pl-12 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all outline-none"
+                  data-placeholder-th="กรอกรหัสผ่าน" data-placeholder-en="Enter password" placeholder="กรอกรหัสผ่าน">
+                <button type="button" onclick="togglePasswordVisibility('loginPassword')" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors">
+                  <i class="fi fi-rr-eye" id="loginPasswordIcon"></i>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full bg-primary text-white py-3.5 rounded-xl font-semibold shadow-lg shadow-primary/30 hover:bg-primary-light hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 group">
+              <i class="fi fi-rr-sign-in-alt group-hover:translate-x-1 transition-transform"></i>
+              <span data-lang-th="เข้าสู่ระบบ" data-lang-en="Login">เข้าสู่ระบบ</span>
+            </button>
+          </form>
+
+          <!-- Register Link -->
+          <div id="registerLink" class="hidden text-center mt-6 pt-4 border-t border-gray-100">
+            <span class="text-gray-500 text-sm" data-lang-th="ยังไม่มีบัญชี?" data-lang-en="Don't have an account?">ยังไม่มีบัญชี?</span>
+            <button onclick="showRegisterModal()" class="text-primary font-semibold text-sm hover:text-secondary ml-1 transition-colors" data-lang-th="สมัครสมาชิก" data-lang-en="Register">สมัครสมาชิก</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer (Login Page) -->
+      <div class="text-center mt-8 space-y-2 opacity-80 hover:opacity-100 transition-opacity">
+        <p class="text-gray-500 text-sm">
+          <span data-lang-th="เวอร์ชัน" data-lang-en="Version">เวอร์ชัน</span> 1.0.0
+        </p>
+        <div class="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+          <i class="fi fi-rr-code-branch"></i>
+          <span data-lang-th="พัฒนาโดย" data-lang-en="Developed by">พัฒนาโดย</span>
+          <span class="font-semibold text-primary">Naiyachon Ponthong</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Main Application -->
+  <div id="mainApp" class="hidden">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar fixed left-0 top-0 h-full w-64 bg-primary text-white z-40 transform -translate-x-full lg:translate-x-0 transition-all duration-300 shadow-2xl flex flex-col group/sidebar">
+
+      <!-- Sidebar Header -->
+      <div class="p-5 border-b border-white/10 relative">
+        <div class="flex items-center gap-3 overflow-hidden whitespace-nowrap">
+          <div id="sidebarLogo" class="w-10 h-10 bg-secondary rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-secondary/20 transition-all duration-300">
+            <i class="fi fi-sr-school text-primary"></i>
+          </div>
+          <div class="overflow-hidden transition-all duration-300 sidebar-text opacity-100">
+            <h2 id="sidebarAppName" class="font-bold text-sm tracking-wide truncate">ระบบบุคลากร</h2>
+            <p id="sidebarSchoolName" class="text-secondary text-xs truncate font-light">โรงเรียนตัวอย่าง</p>
+          </div>
+        </div>
+
+        <!-- Toggle Button -->
+        <button onclick="toggleSidebarCollapse()" class="absolute -right-3 top-8 w-6 h-6 bg-secondary text-primary rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform cursor-pointer z-50 lg:flex hidden">
+          <i id="sidebarToggleIcon" class="fi fi-rr-angle-small-left text-lg font-bold"></i>
+        </button>
+      </div>
+
+      <!-- User Info -->
+      <div class="p-5 border-b border-white/10 bg-primary-dark/30 overflow-hidden whitespace-nowrap">
+        <div class="flex items-center gap-3">
+          <div id="sidebarUserAvatar" class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0 border border-white/10 transition-all duration-300">
+            <i class="fi fi-sr-user text-secondary"></i>
+          </div>
+          <div class="overflow-hidden transition-all duration-300 sidebar-text opacity-100">
+            <p id="sidebarUserName" class="font-medium text-sm truncate">ผู้ใช้</p>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+              <p id="sidebarUserRole" class="text-gray-300 text-xs truncate">บทบาท</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Menu -->
+      <nav class="p-3 overflow-y-auto flex-grow sidebar-scroll overflow-x-hidden">
+        <ul class="space-y-1.5" id="sidebarMenu">
+          <!-- Menu items will be generated by JavaScript -->
+        </ul>
+      </nav>
+
+      <!-- Logout Button -->
+      <div class="p-4 border-t border-white/10 bg-primary-dark/50 overflow-hidden">
+        <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-red-500/10 text-gray-300 hover:text-red-300 transition-all duration-200 group whitespace-nowrap">
+          <i class="fi fi-rr-sign-out-alt group-hover:-translate-x-1 transition-transform flex-shrink-0 text-lg"></i>
+          <span data-lang-th="ออกจากระบบ" data-lang-en="Logout" class="font-medium sidebar-text transition-all duration-300 opacity-100">ออกจากระบบ</span>
+        </button>
+      </div>
+    </aside>
+
+
+    <!-- Main Content -->
+    <main id="mainContent" class="lg:ml-64 min-h-screen transition-all duration-300 flex flex-col bg-surface">
+      <!-- Top Navigation -->
+      <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-30 border-b border-gray-100">
+        <div class="flex items-center justify-between px-6 py-3">
+          <!-- Mobile Menu Toggle -->
+          <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-xl hover:bg-gray-100 text-primary transition">
+            <i class="fi fi-rr-menu-burger text-xl"></i>
+          </button>
+
+          <!-- Page Title -->
+          <div class="flex items-center gap-3">
+            <div class="hidden lg:block w-1 h-6 bg-secondary rounded-full"></div>
+            <h1 id="pageTitle" class="text-lg font-bold text-primary hidden lg:block tracking-tight">หน้าหลัก</h1>
+          </div>
+
+          <!-- Right Section -->
+          <div class="flex items-center gap-4">
+            <!-- Language Toggle -->
+            <button onclick="toggleLanguage()" id="langToggleBtnMain"
+              class="p-2 rounded-xl hover:bg-gray-100 text-gray-600 hover:text-primary transition"
+              title="เปลี่ยนภาษา">
+              <i class="fi fi-rr-globe text-xl"></i>
+            </button>
+
+            <!-- User Menu -->
+            <div class="relative">
+              <button onclick="toggleUserMenu()" class="flex items-center gap-2 p-1.5 rounded-full hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all">
+                <div id="headerUserAvatar" class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-secondary shadow-sm">
+                  <i class="fi fi-sr-user text-sm"></i>
+                </div>
+                <i class="fi fi-rr-angle-small-down text-gray-400 hidden sm:block mr-1"></i>
+              </button>
+
+              <!-- User Dropdown -->
+              <div id="userDropdown" class="hidden absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 animate-fade-in-down origin-top-right">
+                <div class="px-4 py-2 border-b border-gray-50 mb-1">
+                  <p class="text-xs text-gray-400">บัญชีของฉัน</p>
+                </div>
+                <button onclick="navigateTo('profile')" class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-gray-700 transition text-left text-sm">
+                  <i class="fi fi-rr-user text-gray-400"></i>
+                  <span data-lang-th="โปรไฟล์" data-lang-en="Profile">โปรไฟล์</span>
+                </button>
+                <button onclick="navigateTo('settings')" id="settingsMenuBtn" class="hidden w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-gray-700 transition text-left text-sm">
+                  <i class="fi fi-rr-settings text-gray-400"></i>
+                  <span data-lang-th="ตั้งค่า" data-lang-en="Settings">ตั้งค่า</span>
+                </button>
+                <div class="border-t border-gray-100 my-1"></div>
+                <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 text-red-500 transition text-left text-sm">
+                  <i class="fi fi-rr-sign-out-alt"></i>
+                  <span data-lang-th="ออกจากระบบ" data-lang-en="Logout">ออกจากระบบ</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <div id="pageContent" class="p-4 lg:p-8 flex-grow min-h-[calc(100vh-140px)]">
+        <!-- Content will be loaded here -->
+      </div>
+
+      <!-- Footer (Main App) -->
+      <footer class="bg-white border-t border-gray-200 py-4 px-8 mt-auto">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-gray-500">
+          <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-100 text-green-700 text-xs font-medium">
+            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <span data-lang-th="ระบบพร้อมใช้งาน" data-lang-en="System Operational">ระบบพร้อมใช้งาน</span>
+          </div>
+
+          <div class="flex flex-col md:flex-row items-center gap-1 md:gap-6">
+             <p class="font-light">&copy; <script>document.write(new Date().getFullYear())</script></p>
+             <div class="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
+               <i class="fi fi-rr-computer text-primary/70 text-xs"></i>
+               <span class="text-xs" data-lang-th="พัฒนาโดย" data-lang-en="Developed by">พัฒนาโดย</span>
+               <span class="font-bold text-primary text-xs hover:text-secondary transition-colors cursor-default">Naiyachon Ponthong</span>
+             </div>
+          </div>
+        </div>
+      </footer>
+
+    </main>
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-30 hidden lg:hidden transition-opacity"></div>
+  </div>
+
+  <!-- Register Modal -->
+  <div id="registerModal" class="fixed inset-0 bg-primary/40 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-scale-up">
+      <!-- Modal Header -->
+      <div class="bg-primary px-6 py-5 flex-shrink-0 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-primary to-primary-light"></div>
+        <div class="relative z-10 flex items-center justify-between">
+          <h2 class="text-xl font-bold text-white flex items-center gap-3">
+            <span class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm">
+              <i class="fi fi-rr-user-add text-secondary"></i>
+            </span>
+            <span data-lang-th="สมัครสมาชิกใหม่" data-lang-en="New Registration">สมัครสมาชิกใหม่</span>
+          </h2>
+          <button onclick="closeRegisterModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all">
+            <i class="fi fi-rr-cross text-sm"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <form id="registerForm" onsubmit="handleRegister(event)" class="p-8 overflow-y-auto custom-scrollbar">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <!-- Account Info Section -->
+          <div class="md:col-span-2">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="w-1 h-5 bg-secondary rounded-full"></span>
+              <h3 class="font-bold text-gray-800" data-lang-th="ข้อมูลบัญชี" data-lang-en="Account Info">ข้อมูลบัญชี</h3>
+            </div>
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <span data-lang-th="ชื่อผู้ใช้" data-lang-en="Username">ชื่อผู้ใช้</span> <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="regUsername" required
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all outline-none"
+              data-placeholder-th="กรอกชื่อผู้ใช้" data-placeholder-en="Enter username" placeholder="กรอกชื่อผู้ใช้">
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <span data-lang-th="รหัสผ่าน" data-lang-en="Password">รหัสผ่าน</span> <span class="text-red-500">*</span>
+            </label>
+            <input type="password" id="regPassword" required minlength="6"
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all outline-none"
+              data-placeholder-th="อย่างน้อย 6 ตัวอักษร" data-placeholder-en="At least 6 characters" placeholder="อย่างน้อย 6 ตัวอักษร">
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <span data-lang-th="ยืนยันรหัสผ่าน" data-lang-en="Confirm Password">ยืนยันรหัสผ่าน</span> <span class="text-red-500">*</span>
+            </label>
+            <input type="password" id="regConfirmPassword" required
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all outline-none"
+              data-placeholder-th="กรอกรหัสผ่านอีกครั้ง" data-placeholder-en="Enter password again" placeholder="กรอกรหัสผ่านอีกครั้ง">
+          </div>
+
+          <!-- Personal Info Section -->
+          <div class="md:col-span-2 mt-2">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="w-1 h-5 bg-secondary rounded-full"></span>
+              <h3 class="font-bold text-gray-800" data-lang-th="ข้อมูลส่วนตัว" data-lang-en="Personal Info">ข้อมูลส่วนตัว</h3>
+              <span class="text-xs text-gray-400 font-normal ml-2" data-lang-th="(ระบุอย่างน้อย 1 ภาษา)" data-lang-en="(At least one language)"> (ระบุอย่างน้อย 1 ภาษา)</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <span data-lang-th="ชื่อ-นามสกุล (ไทย)" data-lang-en="Full Name (Thai)">ชื่อ-นามสกุล (ไทย)</span>
+            </label>
+            <input type="text" id="regName"
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all outline-none"
+              data-placeholder-th="กรอกชื่อ-นามสกุล" data-placeholder-en="Enter full name" placeholder="กรอกชื่อ-นามสกุล">
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <span data-lang-th="ชื่อ-นามสกุล (อังกฤษ)" data-lang-en="Full Name (English)">ชื่อ-นามสกุล (อังกฤษ)</span>
+            </label>
+            <input type="text" id="regNameEn"
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all outline-none"
+              data-placeholder-th="กรอกชื่อ-นามสกุล (ภาษาอังกฤษ)" data-placeholder-en="Enter full name (English)" placeholder="กรอกชื่อ-นามสกุล (ภาษาอังกฤษ)">
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <span data-lang-th="ตำแหน่ง" data-lang-en="Position">ตำแหน่ง</span> <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <select id="regPosition" required
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all outline-none appearance-none">
+                <option value="" data-lang-th="-- เลือกตำแหน่ง --" data-lang-en="-- Select Position --">-- เลือกตำแหน่ง --</option>
+              </select>
+              <i class="fi fi-rr-angle-small-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <span data-lang-th="สายชั้น" data-lang-en="Grade Level">สายชั้น</span> <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <select id="regGradeLevel" required
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all outline-none appearance-none">
+                <option value="" data-lang-th="-- เลือกสายชั้น --" data-lang-en="-- Select Grade Level --">-- เลือกสายชั้น --</option>
+              </select>
+              <i class="fi fi-rr-angle-small-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <span data-lang-th="อีเมล" data-lang-en="Email">อีเมล</span>
+            </label>
+            <input type="email" id="regEmail"
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all outline-none"
+              data-placeholder-th="กรอกอีเมล" data-placeholder-en="Enter email" placeholder="กรอกอีเมล">
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <span data-lang-th="เบอร์โทรศัพท์" data-lang-en="Phone">เบอร์โทรศัพท์</span>
+            </label>
+            <input type="tel" id="regPhone"
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all outline-none"
+              data-placeholder-th="กรอกเบอร์โทรศัพท์" data-placeholder-en="Enter phone number" placeholder="กรอกเบอร์โทรศัพท์">
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex gap-4 mt-8 pt-6 border-t border-gray-100 bg-white sticky bottom-0">
+          <button type="button" onclick="closeRegisterModal()" class="flex-1 px-6 py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors">
+            <span data-lang-th="ยกเลิก" data-lang-en="Cancel">ยกเลิก</span>
+          </button>
+          <button type="submit" class="flex-1 px-6 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-primary-light shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all">
+            <i class="fi fi-rr-check-circle mr-2"></i>
+            <span data-lang-th="ยืนยันการสมัคร" data-lang-en="Confirm Registration">ยืนยันการสมัคร</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Data Modal (for add/edit/view) -->
+  <div id="dataModal" class="fixed inset-0 bg-primary/40 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-scale-up">
+      <!-- Modal Header -->
+      <div class="bg-primary px-6 py-5 flex-shrink-0 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-primary to-primary-light"></div>
+        <div class="relative z-10 flex items-center justify-between">
+          <h2 id="dataModalTitle" class="text-xl font-bold text-white flex items-center gap-3">
+            <i class="fi fi-rr-document"></i>
+            <span>รายละเอียด</span>
+          </h2>
+          <button onclick="closeDataModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all">
+            <i class="fi fi-rr-cross text-sm"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div id="dataModalContent" class="p-8 overflow-y-auto custom-scrollbar bg-surface">
+        <!-- Content will be loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Files -->
+  <script src="/js/app.js"></script>
+  <script src="/js/Js2.js"></script>
+  <script src="/js/Js3.js"></script>
+  <script src="/js/Js4.js"></script>
+  <script src="/js/Js5.js"></script>
+  <script src="/js/Js6.js"></script>
+  <script src="/js/Js7.js"></script>
+  <script src="/js/Js8.js"></script>
+  <script src="/js/Js.js"></script>
+
+  <style>
+    /* Custom Scrollbar for inner content */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Animation Keyframes */
+    @keyframes scaleUp {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .animate-scale-up {
+      animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-down {
+      animation: fadeInDown 0.2s ease-out;
+    }
+  </style>
+
+</body>
+</html>
