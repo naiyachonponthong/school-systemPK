@@ -20,7 +20,7 @@ const auditRoutes = require('./routes/audit');
 const uploadRoutes = require('./routes/upload');
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Render กำหนด PORT อัตโนมัติ
+const PORT = process.env.PORT || 3000; // Render ใช้ port จาก environment
 
 // Security - สำหรับ HTTPS
 app.use(helmet({
@@ -33,7 +33,7 @@ app.use(helmet({
   }
 }));
 app.use(cors({
-  origin: ['https://pkschoolsystem.pornsirikul.ac.th', 'http://localhost:3000'],
+  origin: ['https://personnel-system.onrender.com', 'http://localhost:3000', 'https://pkschoolsystem.pornsirikul.ac.th'],
   credentials: true
 }));
 
