@@ -1,20 +1,17 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-// ใช้ DATABASE_URL สำหรับ PostgreSQL บน Render หรือ MySQL config ปกติ
+// ใช้ Render PostgreSQL URL หรือ MySQL config
+const databaseUrl = process.env.DATABASE_URL;
+
 let sequelize;
 
-if (process.env.DATABASE_URL) {
-  // PostgreSQL on Render
-  sequelize = new Sequelize(process.env.DATABASE_URL, {
+if (databaseUrl) {
+  // PostgreSQL (Render)
+  sequelize = new Sequelize(databaseUrl, {
     dialect: 'postgres',
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false
-      }
-    },
+    timezone: '+07:00',
     define: {
       timestamps: true,
       underscored: true,
@@ -23,7 +20,7 @@ if (process.env.DATABASE_URL) {
     }
   });
 } else {
-  // MySQL config (local or remote)
+  // MySQL (fallback)
   sequelize = new Sequelize(
     process.env.DB_NAME || 'school_personnel',
     process.env.DB_USER || 'root',
